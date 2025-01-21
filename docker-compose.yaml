@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16.4
+    restart: on-failure
+    shm_size: 128mb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: book-store
+    volumes:
+      - data-volume:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pgadmin-product
+    restart: on-failure
+    ports:
+      - "5480:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: username@example.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    depends_on:
+      - postgres
+    links:
+      - postgres
+volumes:
+  data-volume:
