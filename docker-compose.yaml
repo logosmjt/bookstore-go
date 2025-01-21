@@ -13,18 +13,5 @@ services:
     volumes:
       - data-volume:/var/lib/postgresql/data
 
-  pgadmin:
-    image: dpage/pgadmin4:8
-    container_name: pgadmin-product
-    restart: on-failure
-    ports:
-      - "5480:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: username@example.com
-      PGADMIN_DEFAULT_PASSWORD: password
-    depends_on:
-      - postgres
-    links:
-      - postgres
 volumes:
   data-volume:
