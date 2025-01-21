@@ -14,7 +14,7 @@ CREATE TABLE "books" (
   "author" varchar NOT NULL,
   "price" bigint NOT NULL,
   "description" varchar NOT NULL,
-  "coverImageUrl" varchar,
+  "cover_image_url" varchar NOT NULL,
   "published_date" timestamptz NOT NULL,
   "user_id" bigint,
   "updated_at" timestamptz NOT NULL DEFAULT (now()),
