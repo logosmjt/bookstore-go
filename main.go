@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 
-	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/logosmjt/bookstore-go/api"
 	db "github.com/logosmjt/bookstore-go/db/sqlc"
 	"github.com/logosmjt/bookstore-go/util"
 	"github.com/rs/zerolog/log"
@@ -43,5 +46,13 @@ func runDBMigration(migrationURL string, dbSource string) {
 }
 
 func runGinServer(config util.Config, store db.Store) {
+	server, err := api.NewServer(config, store)
+	if err != nil {
+		log.Fatal().Err(err).Msg("create server failed")
+	}
 
+	err = server.Start(config.HTTPServerAddress)
+	if err != nil {
+		log.Fatal().Err(err).Msg("start server failed")
+	}
 }

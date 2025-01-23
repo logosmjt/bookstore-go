@@ -17,7 +17,7 @@ WHERE id = $1 LIMIT 1;
 
 -- name: ListBooks :many
 SELECT * FROM books
-WHERE author = $1
+WHERE user_id = $1
 ORDER BY published_date
 LIMIT $2
 OFFSET $3;

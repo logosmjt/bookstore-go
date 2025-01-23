@@ -87,20 +87,20 @@ func (q *Queries) GetBook(ctx context.Context, id int64) (Book, error) {
 
 const listBooks = `-- name: ListBooks :many
 SELECT id, title, author, price, description, cover_image_url, published_date, user_id, updated_at, created_at FROM books
-WHERE author = $1
+WHERE user_id = $1
 ORDER BY published_date
 LIMIT $2
 OFFSET $3
 `
 
 type ListBooksParams struct {
-	Author string `json:"author"`
-	Limit  int32  `json:"limit"`
-	Offset int32  `json:"offset"`
+	UserID pgtype.Int8 `json:"user_id"`
+	Limit  int32       `json:"limit"`
+	Offset int32       `json:"offset"`
 }
 
 func (q *Queries) ListBooks(ctx context.Context, arg ListBooksParams) ([]Book, error) {
-	rows, err := q.db.Query(ctx, listBooks, arg.Author, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listBooks, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
