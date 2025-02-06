@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BookStore_CreateUser_FullMethodName = "/pd.BookStore/CreateUser"
+	BookStore_CreateUser_FullMethodName = "/pb.BookStore/CreateUser"
 )
 
 // BookStoreClient is the client API for BookStore service.
@@ -108,7 +108,7 @@ func _BookStore_CreateUser_Handler(srv interface{}, ctx context.Context, dec fun
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var BookStore_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pd.BookStore",
+	ServiceName: "pb.BookStore",
 	HandlerType: (*BookStoreServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
