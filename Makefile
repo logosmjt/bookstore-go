@@ -26,4 +26,13 @@ server:
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/logosmjt/bookstore-go/db/sqlc Store
 
-.PHONY: migrate_init migrate_up migrate_down sqlc server mock test
+proto:
+	rm -f pb/*.go
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+	--go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+	proto/*.proto
+
+evans:
+	evans --host localhost --port 9090 -r repl
+
+.PHONY: migrate_init migrate_up migrate_down sqlc server mock test proto evans
