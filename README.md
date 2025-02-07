@@ -261,4 +261,47 @@ err := paseto.Verify(token, publicKey, &newJsonToken, &newFooter)
 ```
 4. 使用postman，insomnia或者curl命令与gin service进行交互
 
-### TBC grpc
+### 第五天 
+
+#### gRPC simple service
+1. 按照[指南](https://grpc.io/docs/languages/go/quickstart/)开始Go中的gRPC旅程
+```
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+```
+2. 更新gRPC service，参考文档或[proto](https://github.com/logosmjt/bookstore-go/tree/main/proto)下的文件
+
+3. 生成代码参考[文档](https://grpc.io/docs/languages/go/generated-code/)或Makefile中proto
+```
+rm -f pb/*.go
+protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+--go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+proto/*.proto
+```
+4. 更新service，启动服务
+[server.go](https://github.com/logosmjt/bookstore-go/blob/main/gapi/server.go)
+[createUser.go](https://github.com/logosmjt/bookstore-go/blob/main/gapi/createUser.go)
+[runGrpcServer](https://github.com/logosmjt/bookstore-go/blob/main/main.go#L85C6-L85C19)
+
+5. 安装[evans](https://github.com/ktr0731/evans) 完成测试
+
+```
+localhost:9090> package pb
+pb@localhost:9090> show service
+pb@localhost:9090> service BookStore
+
+pb.BookStore@localhost:9090> call CreateUser
+name (TYPE_STRING) => rpctest1
+password (TYPE_STRING) => 123456
+email (TYPE_STRING) => rpctest1@bookstore.com
+role (TYPE_STRING) => 
+{
+  "user": {
+    "createdAt": "2025-02-07T00:55:04.167042Z",
+    "email": "rpctest1@bookstore.com",
+    "name": "rpctest1",
+    "role": "buyer",
+    "updatedAt": "2025-02-07T00:55:04.167042Z"
+  }
+}
+```
