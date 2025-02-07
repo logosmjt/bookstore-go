@@ -312,6 +312,19 @@ role (TYPE_STRING) =>
 2. clone [googleapis](https://github.com/googleapis/googleapis)，将[google/api](https://github.com/googleapis/googleapis/tree/master/google/api)下需要的文件复制到[google/api](https://github.com/logosmjt/bookstore-go/tree/main/proto/google/api)。
 3. 添加`--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \`到`Makefile`中的`proto`, 创建`runGatewayServer`。
 4. clone [gRPC-Gateway](https://github.com/grpc-ecosystem/grpc-gateway)，复制[options](https://github.com/grpc-ecosystem/grpc-gateway/tree/main/protoc-gen-openapiv2/options)下需要的文件到[protoc-gen-openapiv2/options](https://github.com/logosmjt/bookstore-go/tree/main/proto/protoc-gen-openapiv2/options)。更新[service_book_store.proto](https://github.com/logosmjt/bookstore-go/blob/main/proto/service_book_store.proto)，添加options。
-5. clone [swagger-ui](https://github.com/swagger-api/swagger-ui)，将[dist](https://github.com/swagger-api/swagger-ui/tree/master/dist)下的内容复制到[doc/swagger](https://github.com/logosmjt/bookstore-go/tree/main/doc/swagger)。添加`--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=bookstore \`到`Makefile`中的`proto`。
+```
+rpc CreateUser (CreateUserRequest) returns (CreateUserResponse){
+        option (google.api.http) = {
+            post: "/v1/create_user"
+            body: "*"
+        };
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+            description: "Use this API to create a new user";
+            summary: "Create new user";
+        };
+    }
+```
+5. clone [swagger-ui](https://github.com/swagger-api/swagger-ui)，将[dist](https://github.com/swagger-api/swagger-ui/tree/master/dist)下的内容复制到[doc/swagger](https://github.com/logosmjt/bookstore-go/tree/main/doc/swagger)，修改swagger-initializer中的url，添加`--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=bookstore \`到`Makefile`中的`proto`。
 6. 安装[statik](https://github.com/rakyll/statik),并添加`statik -src=./doc/swagger -dest=./doc`到`Makefile`中的`proto`。
 7. 打开`http://localhost:8080/swagger/`进行验证。
+![swagger-ui](/doc/img/screenshot.jpg)
