@@ -305,3 +305,13 @@ role (TYPE_STRING) =>
   }
 }
 ```
+
+#### gRPC Gateway
+[gRPC-Gateway](https://github.com/grpc-ecosystem/grpc-gateway)是Google协议缓冲器编译器ProtoC的插件。它读取Protobuf服务定义并生成反向代理服务器，该服务器将静止的HTTP API转换为GRPC。该服务器是根据您的服务定义中的Google.api.http注释生成的。
+1. [安装](https://github.com/grpc-ecosystem/grpc-gateway?tab=readme-ov-file#installation)gRPC-Gateway。
+2. clone [googleapis](https://github.com/googleapis/googleapis)，将[google/api](https://github.com/googleapis/googleapis/tree/master/google/api)下需要的文件复制到[google/api](https://github.com/logosmjt/bookstore-go/tree/main/proto/google/api)。
+3. 添加`--grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \`到`Makefile`中的`proto`, 创建`runGatewayServer`。
+4. clone [gRPC-Gateway](https://github.com/grpc-ecosystem/grpc-gateway)，复制[options](https://github.com/grpc-ecosystem/grpc-gateway/tree/main/protoc-gen-openapiv2/options)下需要的文件到[protoc-gen-openapiv2/options](https://github.com/logosmjt/bookstore-go/tree/main/proto/protoc-gen-openapiv2/options)。更新[service_book_store.proto](https://github.com/logosmjt/bookstore-go/blob/main/proto/service_book_store.proto)，添加options。
+5. clone [swagger-ui](https://github.com/swagger-api/swagger-ui)，将[dist](https://github.com/swagger-api/swagger-ui/tree/master/dist)下的内容复制到[doc/swagger](https://github.com/logosmjt/bookstore-go/tree/main/doc/swagger)。添加`--openapiv2_out=doc/swagger --openapiv2_opt=allow_merge=true,merge_file_name=bookstore \`到`Makefile`中的`proto`。
+6. 安装[statik](https://github.com/rakyll/statik),并添加`statik -src=./doc/swagger -dest=./doc`到`Makefile`中的`proto`。
+7. 打开`http://localhost:8080/swagger/`进行验证。

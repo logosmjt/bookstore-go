@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,15 +12,21 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/logosmjt/bookstore-go/api"
 	db "github.com/logosmjt/bookstore-go/db/sqlc"
+	_ "github.com/logosmjt/bookstore-go/doc/statik"
 	"github.com/logosmjt/bookstore-go/gapi"
 	"github.com/logosmjt/bookstore-go/pb"
 	"github.com/logosmjt/bookstore-go/util"
+	"github.com/rakyll/statik/fs"
+	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var interruptSignals = []os.Signal{
@@ -50,6 +57,7 @@ func main() {
 
 	// runGinServer(config, store)
 	runGrpcServer(ctx, waitGroup, config, store)
+	runGatewayServer(ctx, waitGroup, config, store)
 
 	err = waitGroup.Wait()
 	if err != nil {
@@ -70,17 +78,17 @@ func runDBMigration(migrationURL string, dbSource string) {
 	log.Info().Msg("db migrated successfully")
 }
 
-// func runGinServer(config util.Config, store db.Store) {
-// 	server, err := api.NewServer(config, store)
-// 	if err != nil {
-// 		log.Fatal().Err(err).Msg("create server failed")
-// 	}
+func runGinServer(config util.Config, store db.Store) {
+	server, err := api.NewServer(config, store)
+	if err != nil {
+		log.Fatal().Err(err).Msg("create server failed")
+	}
 
-// 	err = server.Start(config.HTTPServerAddress)
-// 	if err != nil {
-// 		log.Fatal().Err(err).Msg("start server failed")
-// 	}
-// }
+	err = server.Start(config.HTTPServerAddress)
+	if err != nil {
+		log.Fatal().Err(err).Msg("start server failed")
+	}
+}
 
 func runGrpcServer(
 	ctx context.Context,
@@ -125,6 +133,96 @@ func runGrpcServer(
 		grpcServer.GracefulStop()
 		log.Info().Msg("gRPC server is stopped")
 
+		return nil
+	})
+}
+
+func runGatewayServer(
+	ctx context.Context,
+	waitGroup *errgroup.Group,
+	config util.Config,
+	store db.Store,
+) {
+	server, err := gapi.NewServer(config, store)
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create server")
+	}
+
+	jsonOption := runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+		MarshalOptions: protojson.MarshalOptions{
+			UseProtoNames: true,
+		},
+		UnmarshalOptions: protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	})
+
+	grpcMux := runtime.NewServeMux(jsonOption)
+
+	err = pb.RegisterBookStoreHandlerServer(ctx, grpcMux, server)
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot register handler server")
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/", grpcMux)
+
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create statik fs")
+	}
+
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+	mux.Handle("/swagger/", swaggerHandler)
+
+	c := cors.New(cors.Options{
+		AllowedOrigins: config.AllowedOrigins,
+		AllowedMethods: []string{
+			http.MethodHead,
+			http.MethodOptions,
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodPatch,
+			http.MethodDelete,
+		},
+		AllowedHeaders: []string{
+			"Content-Type",
+			"Authorization",
+		},
+		AllowCredentials: true,
+	})
+	handler := c.Handler(gapi.HttpLogger(mux))
+
+	httpServer := &http.Server{
+		Handler: handler,
+		Addr:    config.HTTPServerAddress,
+	}
+
+	waitGroup.Go(func() error {
+		log.Info().Msgf("start HTTP gateway server at %s", httpServer.Addr)
+		err = httpServer.ListenAndServe()
+		if err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				return nil
+			}
+			log.Error().Err(err).Msg("HTTP gateway server failed to serve")
+			return err
+		}
+		return nil
+	})
+
+	waitGroup.Go(func() error {
+		<-ctx.Done()
+		log.Info().Msg("graceful shutdown HTTP gateway server")
+
+		err := httpServer.Shutdown(context.Background())
+		if err != nil {
+			log.Error().Err(err).Msg("failed to shutdown HTTP gateway server")
+			return err
+		}
+
+		log.Info().Msg("HTTP gateway server is stopped")
 		return nil
 	})
 }
