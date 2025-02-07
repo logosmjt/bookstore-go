@@ -328,3 +328,6 @@ rpc CreateUser (CreateUserRequest) returns (CreateUserResponse){
 6. 安装[statik](https://github.com/rakyll/statik),并添加`statik -src=./doc/swagger -dest=./doc`到`Makefile`中的`proto`。
 7. 打开`http://localhost:8080/swagger/`进行验证。
 ![swagger-ui](/doc/img/screenshot.jpg)
+
+### 最后
+gRPC中还没有完成用户登录，token验证和书籍相关的API，大家可尝试练习。
